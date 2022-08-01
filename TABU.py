@@ -37,28 +37,38 @@ def find_neighborhood(solution):
     s = copy.deepcopy(solution)
 
     neighborhood_of_solution = []
+
     for n in range(len(s)):
-        # width = solution.iloc[n]["width"]
-        # height = solution.iloc[n]["height"]
-
-        # solution.iloc[n]["width"] = height
-        # solution.iloc[n]["height"] = width
-        # solution.iloc[n]["vertical"] = 1
-        
-        # mem = copy.deepcopy(solution)
-        # neighborhood_of_solution.append(mem)
-
         idx1 = s.iloc[n].copy()
         for m in range(len(s)):
             idx2 = s.iloc[m].copy()
             if m == n:
                 continue
-
             mem = copy.deepcopy(s)
             mem.iloc[m] = idx1
-            mem.iloc[n] = idx2
-            
+            mem.iloc[n] = idx2  
             neighborhood_of_solution.append(mem)
+
+    for n in range(len(s)):
+        width = solution.iloc[n]["width"]
+        height = solution.iloc[n]["height"]
+        mem2 = copy.deepcopy(solution)
+        mem2.iloc[n]["width"] = height
+        mem2.iloc[n]["height"] = width
+        mem2.iloc[n]["vertical"] = 1
+        neighborhood_of_solution.append(mem2)
+
+    for n in range(len(mem2)):
+        idx1 = mem2.iloc[n].copy()
+        for m in range(len(s)):
+            idx2 = s.iloc[m].copy()
+            if m == n:
+                continue
+            mem3 = copy.deepcopy(s)
+            mem3.iloc[m] = idx1
+            mem3.iloc[n] = idx2
+            neighborhood_of_solution.append(mem3)
+
     random.shuffle(neighborhood_of_solution)
     return neighborhood_of_solution
 
@@ -77,12 +87,14 @@ def tabu_search(first_solution, value, iters, size):
         while not found:
             i = 0
 
-            first_exchange_node = 1
-            second_exchange_node = 2
+            first_exchange_node = "1_0"
+            second_exchange_node = "2_0"
+            vertical_first = 0
+            vertical_second = 0
             while i < len(best_solution):
-                if best_solution.iloc[i]["id"] != solution.iloc[i]["id"]:
-                    first_exchange_node = best_solution.iloc[i]["id"]
-                    second_exchange_node = solution.iloc[i]["id"]
+                if best_solution.iloc[i]["id"] != solution.iloc[i]["id"] or (best_solution.iloc[i]["id"] == solution.iloc[i]["id"] and best_solution.iloc[i]["vertical"] != solution.iloc[i]["vertical"]):
+                    first_exchange_node = str(best_solution.iloc[i]["id"])+"_"+str(best_solution.iloc[i]["vertical"])
+                    second_exchange_node = str(solution.iloc[i]["id"])+"_"+str(solution.iloc[i]["vertical"])
                     break
                 i = i + 1
 
