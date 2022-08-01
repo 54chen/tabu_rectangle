@@ -1,14 +1,27 @@
 import argparse
+from re import S
+from tempfile import tempdir
 import time
 import pandas as pd
 import copy
 from BLF import BLF
+import random
 
 ##
 # ##
 ##
 SCOPE=20
 RESOLUTION=1
+
+def fitness(solution):
+    temp = copy.deepcopy(solution)
+    temp["x"] = 0
+    temp["y"] = 0
+    temp["status"] = 0
+    blf = BLF(temp, SCOPE, RESOLUTION)
+    blf.run()
+    value = blf.length
+    return temp,value
 
 def generate_first_solution(csv):
     header_list = ["id", "width", "height"]
@@ -18,88 +31,76 @@ def generate_first_solution(csv):
     rectangles["status"] = 0
     rectangles["vertical"] = 0
 
-    blf = BLF(rectangles, SCOPE, RESOLUTION)
-    blf.run()
-    return rectangles, blf.length
+    return fitness(rectangles)
 
 def find_neighborhood(solution):
+    s = copy.deepcopy(solution)
+
     neighborhood_of_solution = []
-    for n in range(len(solution)):
-        if n > 0:
-            break
-        else:
-            print("n",n)
-        width = solution.loc[n]["width"]
-        height = solution.loc[n]["height"]
+    for n in range(len(s)):
+        # width = solution.iloc[n]["width"]
+        # height = solution.iloc[n]["height"]
 
-        solution.loc[n]["width"] = height
-        solution.loc[n]["height"] = width
-        solution.loc[n]["vertical"] = 1
+        # solution.iloc[n]["width"] = height
+        # solution.iloc[n]["height"] = width
+        # solution.iloc[n]["vertical"] = 1
         
-        blf = BLF(solution, SCOPE, RESOLUTION)
-        blf.run()
-        mem = copy.deepcopy(solution)
-        neighborhood_of_solution.append([mem, blf.length])
+        # mem = copy.deepcopy(solution)
+        # neighborhood_of_solution.append(mem)
 
-        idx1 = solution.loc[n]
-        for m in range(len(solution)):
-            idx2 = solution.loc[m]
+        idx1 = s.iloc[n].copy()
+        for m in range(len(s)):
+            idx2 = s.iloc[m].copy()
             if m == n:
                 continue
 
-            mem = copy.deepcopy(solution)
-            mem.loc[m] = idx1
-            mem.loc[n] = idx2
-            blf = BLF(mem, SCOPE, RESOLUTION)
-            blf.run()
+            mem = copy.deepcopy(s)
+            mem.iloc[m] = idx1
+            mem.iloc[n] = idx2
             
-            neighborhood_of_solution.append([mem, blf.length])
-            if m > 0 :
-                break
-            else:
-                print("m",m)
-        
-    indexOfLastItemInTheList = len(neighborhood_of_solution[0]) - 1
-    neighborhood_of_solution.sort(key=lambda x: x[indexOfLastItemInTheList])
+            neighborhood_of_solution.append(mem)
+    random.shuffle(neighborhood_of_solution)
     return neighborhood_of_solution
 
 def tabu_search(first_solution, value, iters, size):
     count = 1
-    solution = first_solution
+    solution = copy.deepcopy(first_solution)
     tabu_list = list()
     best_value = value
     best_solution_ever = solution
     while count <= iters:
         neighborhood = find_neighborhood(solution)
-        index_of_best_solution = 0
+        index_of_best_solution = 0 
         best_solution = neighborhood[index_of_best_solution]
 
         found = False
         while not found:
             i = 0
-            while i < len(best_solution):
 
-                if best_solution[i] != solution.loc[i]:
-                    first_exchange_node = best_solution.loc[i]
-                    second_exchange_node = solution.loc[i]
+            first_exchange_node = 1
+            second_exchange_node = 2
+            while i < len(best_solution):
+                if best_solution.iloc[i]["id"] != solution.iloc[i]["id"]:
+                    first_exchange_node = best_solution.iloc[i]["id"]
+                    second_exchange_node = solution.iloc[i]["id"]
                     break
                 i = i + 1
 
             if [first_exchange_node, second_exchange_node] not in tabu_list and [
-                second_exchange_node,
-                first_exchange_node,
-            ] not in tabu_list:
+                second_exchange_node, first_exchange_node] not in tabu_list:
+
                 tabu_list.append([first_exchange_node, second_exchange_node])
                 found = True
-                solution = best_solution.loc[:-1]
-                length = neighborhood[index_of_best_solution][1]
+                solution = best_solution
+                temp,length = fitness(neighborhood[index_of_best_solution])
+                print("iters: %d fitness result: %d" % (count, length))
+
                 if length < best_value:
                     best_value = length
-                    best_solution_ever = solution
+                    best_solution_ever = temp
             else:
                 index_of_best_solution = index_of_best_solution + 1
                 best_solution = neighborhood[index_of_best_solution]
-
         if len(tabu_list) >= size:
             tabu_list.pop(0)
 
@@ -108,6 +109,7 @@ def tabu_search(first_solution, value, iters, size):
     return best_solution_ever, best_value
 
 def main(args=None):
+    start = time.perf_counter()
     first_solution, value = generate_first_solution(args.File)
 
     best_sol, best_value = tabu_search(
@@ -116,13 +118,12 @@ def main(args=None):
         args.Iterations,
         args.Size,
     )
-
-    print(f"Best solution: {best_sol}, with total length: {best_value}.")
-
+    print(f"Best solution: \n{best_sol}, \n with total length: {best_value}.")
+    end = time.perf_counter()
+    print("[time cost] " + str(end-start) + "s")
+    BLF.showResult(best_sol, 100, best_value)
 
 if __name__ == "__main__":
-    start = time.perf_counter()
-
     parser = argparse.ArgumentParser(description="Tabu Search")
     parser.add_argument(
         "-f",
@@ -144,5 +145,4 @@ if __name__ == "__main__":
 
     # Pass the arguments to main method
     main(parser.parse_args())
-    end = time.perf_counter()
-    print("[time cost] " + str(end-start) + "s")
+    
