@@ -25,6 +25,10 @@ def generate_first_solution(csv):
 def find_neighborhood(solution):
     neighborhood_of_solution = []
     for n in range(len(solution)):
+        if n > 0:
+            break
+        else:
+            print("n",n)
         width = solution.loc[n]["width"]
         height = solution.loc[n]["height"]
 
@@ -50,7 +54,11 @@ def find_neighborhood(solution):
             blf.run()
             
             neighborhood_of_solution.append([mem, blf.length])
-
+            if m > 0 :
+                break
+            else:
+                print("m",m)
+        
     indexOfLastItemInTheList = len(neighborhood_of_solution[0]) - 1
     neighborhood_of_solution.sort(key=lambda x: x[indexOfLastItemInTheList])
     return neighborhood_of_solution
@@ -71,9 +79,9 @@ def tabu_search(first_solution, value, iters, size):
             i = 0
             while i < len(best_solution):
 
-                if best_solution[i] != solution[i]:
-                    first_exchange_node = best_solution[i]
-                    second_exchange_node = solution[i]
+                if best_solution[i] != solution.loc[i]:
+                    first_exchange_node = best_solution.loc[i]
+                    second_exchange_node = solution.loc[i]
                     break
                 i = i + 1
 
@@ -83,7 +91,7 @@ def tabu_search(first_solution, value, iters, size):
             ] not in tabu_list:
                 tabu_list.append([first_exchange_node, second_exchange_node])
                 found = True
-                solution = best_solution[:-1]
+                solution = best_solution.loc[:-1]
                 length = neighborhood[index_of_best_solution][1]
                 if length < best_value:
                     best_value = length
