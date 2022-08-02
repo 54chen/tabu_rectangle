@@ -24,6 +24,7 @@ def fitness(solution):
     return temp,value
 
 def generate_first_solution(csv):
+    print("start to generate first solution...")
     header_list = ["id", "width", "height"]
     rectangles = pd.read_csv(csv, names=header_list, skipfooter=1, engine='python')
     rectangles["x"] = 0
@@ -89,8 +90,6 @@ def tabu_search(first_solution, value, iters, size):
 
             first_exchange_node = "1_0"
             second_exchange_node = "2_0"
-            vertical_first = 0
-            vertical_second = 0
             while i < len(best_solution):
                 if best_solution.iloc[i]["id"] != solution.iloc[i]["id"] or (best_solution.iloc[i]["id"] == solution.iloc[i]["id"] and best_solution.iloc[i]["vertical"] != solution.iloc[i]["vertical"]):
                     first_exchange_node = str(best_solution.iloc[i]["id"])+"_"+str(best_solution.iloc[i]["vertical"])
@@ -111,6 +110,7 @@ def tabu_search(first_solution, value, iters, size):
                     best_value = length
                     best_solution_ever = temp
             else:
+                print("iters: %d fitness result: %d. find in tabu list" % (count, length))
                 index_of_best_solution = index_of_best_solution + 1
                 best_solution = neighborhood[index_of_best_solution]
         if len(tabu_list) >= size:
@@ -119,7 +119,7 @@ def tabu_search(first_solution, value, iters, size):
         count = count + 1
 
     return best_solution_ever, best_value
-
+    
 def main(args=None):
     start = time.perf_counter()
     first_solution, value = generate_first_solution(args.File)

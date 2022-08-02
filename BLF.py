@@ -24,6 +24,7 @@ class BLF(object):
         row["y"] = y
         if self.length < y + row["height"]:
             self.length = y + row["height"]
+        self.progress_bar(row["id"],len(self.rectangles))
         #print("place rec: ",row["id"], x, y, row["width"], row["height"])
 
     def isIntersect(self, index):
@@ -98,6 +99,16 @@ class BLF(object):
         plt.show()
         plt.clf()
 
+    def progress_bar(self, current, total, bar_length=20):
+        fraction = current / total
+
+        arrow = int(fraction * bar_length - 1) * '-' + '>'
+        padding = int(bar_length - len(arrow)) * ' '
+
+        ending = '\n' if current == total else '\r'
+
+        print(f'Progress: [{arrow}{padding}] {int(fraction*100)}%', end=ending)
+
     def run(self):
         st = time.time()
         temp_time = 0
@@ -142,6 +153,6 @@ if __name__ == '__main__':
     blf = BLF(r, 20, 1)
     blf.run()
     print('Entire execution time:', time.time() - st, 'seconds')
-
+    #print(r)
     blf.showResult(r, blf.width, blf.length)
 
